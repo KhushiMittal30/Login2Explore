@@ -278,7 +278,7 @@
 
             var putReqStr = createPUTRequest(connToken, jsonStr, ProDBName, ProRelationName);
 
-            alert(putReqStr);
+            // alert(putReqStr);
 
             jQuery.ajaxSetup({async:false})
             var resultObj = executeCommandAtGivenBaseUrl(putReqStr,jpdbBaseURL,jpdbIML);
