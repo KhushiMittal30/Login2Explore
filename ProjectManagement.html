@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Form</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://login2explore.com/jpdb/resources/js/0.0.3/jpdb-commons.js"></script>
+    <style>
+        body {
+            background-color: #c6cacd;
+            font-family: 'Arial', sans-serif;
+            color: #ecf0f1;
+            margin: 0;
+            padding: 0;
+        }
+
+        h2 {
+            margin-top: 30px;
+            font-size: 2rem;
+            text-align: center;
+            color: #1abc9c;
+        }
+
+        .container {
+            max-width: 600px;
+            background-color: #34495e;
+            border-radius: 10px;
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3);
+            padding: 20px 30px;
+            margin: 40px auto;
+        }
+
+        .form-group label {
+            font-weight: bold;
+            color: #bdc3c7;
+        }
+
+        .form-control {
+            background-color: #2c3e50;
+            border: 1px solid #1abc9c;
+            color: #ecf0f1;
+        }
+
+        .form-control:focus {
+            border-color: #1abc9c;
+            box-shadow: 0px 0px 5px #1abc9c;
+        }
+
+        .btn-primary {
+            background-color: #1abc9c;
+            border-color: #1abc9c;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .btn-primary:hover {
+            background-color: #16a085;
+            border-color: #16a085;
+        }
+
+        .btn-primary:disabled {
+            background-color: #95a5a6;
+            border-color: #95a5a6;
+        }
+
+        #reset {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        #reset:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+
+        .text-center {
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px 20px;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .btn-lg {
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Project Management</h2>
+        <form id="ProForm" method="post">
+            <div class="form-group">
+                <label for="ProId">Project ID:</label>
+                <input type="text" id="ProId" class="form-control" name="ProId" placeholder="Enter Project ID" required onchange="getpro();">
+            </div>
+            <div class="form-group">
+                <label for="ProName">Project Name:</label>
+                <input type="text" class="form-control" id="ProName" name="ProName" placeholder="Enter Project Name" required>
+            </div>
+            <div class="form-group">
+                <label for="AssignedTo">Assigned To :</label>
+                <input type="text" class="form-control" id="AssignedTo" name="AssignedTo" placeholder="Enter Assigned-To" required>
+            </div>
+            <div class="form-group">
+                <label for="AssignmentDate">Assignment-Date:</label>
+                <input type="date" class="form-control" id="AssignmentDate" name="AssignmentDate" placeholder="Enter Assignment-Date" required>
+            </div>
+            <div class="form-group">
+                <label for="deadline">Deadline</label>
+                <input type="date" class="form-control" id="deadline" name="deadline" placeholder="Enter Deadline" required>
+            </div>
+            <div class="form-group text-center">
+                <input type="button" value="Save" class="btn btn-lg btn-primary" id="save" onclick="SaveProject();" disabled>
+                <input type="button" value="Change" class="btn btn-lg btn-primary" id="change" onclick="ChangeData();" disabled>
+                <input type="button" value="Reset" class="btn btn-lg btn-primary" id="reset" onclick="ResetData();" disabled>
+            </div>
+        </form>
+    </div>
+    <script>
+
+        var jpdbBaseURL = "http://api.login2explore.com:5577" ;
+        var jpdbIRL = '/api/irl';
+        var jpdbIML = '/api/iml';
+        var ProDBName = 'COLLEGE-DB';
+        var ProRelationName = 'PROJECT-TABLE'
+        var connToken = "90934432|-31949230731872309|90956899";
+
+        $('#ProId').focus();
+
+        function saveRecNO2LS(jsonObj){
+            var lvData = JSON.parse(jsonObj.data)
+            localStorage.setItem("recno", lvData.rec_no);
+        }
+
+
+        function getProIdAsJsonObj(){
+            var ProId = $('#ProId').val();
+            var jsonStr = {
+                Projectid:ProId
+            };
+            return JSON.stringify(jsonStr);
+
+        }
+
+        function getpro(){
+
+        var ProIdJsonObj = getProIdAsJsonObj();
+        var getRequestStr = createGET_BY_KEYRequest(connToken, ProDBName,ProRelationName,ProIdJsonObj);
+        jQuery.ajaxSetup({async:false});
+        var resJsonObj = executeCommandAtGivenBaseUrl(getRequestStr, jpdbBaseURL,jpdbIRL);
+        jQuery.ajaxSetup({async:true});
+
+        if(resJsonObj.status === 400){
+            $('#save').prop('disabled',false);
+            $('#reset').prop('disabled',false);
+            $('#ProName').focus();
+            
+        }else if(resJsonObj.status===200){
+            $('#ProId').prop('disabled',true);
+            fillData(resJsonObj);
+
+            $('#change').prop('disabled',false);
+            $('#reset').prop('disabled',false);
+        }
+
+    }
+
+    function fillData(jsonObj){
+
+       saveRecNO2LS(jsonObj);
+       var recordd = JSON.parse(jsonObj.data).record;
+       $('#ProName').val(recordd.Projectname)
+       $('#AssignedTo').val(recordd.AssignedTo)
+       $('#AssignmentDate').val(recordd.AssignmentDate)
+       $('#deadline').val(recordd.Deadline)
+
+    }
+
+        function validateAndGetFormData(){
+
+            var ProIdVar = $("#ProId").val();
+                if(ProIdVar===""){
+                    alert("Project Id required");
+                    $('#ProId').focus();
+                    return "";
+                }
+
+                var ProNameVar = $('#ProName').val();
+                if(ProNameVar===""){
+                    alert("Project name required");
+                    $('#ProName').focus();
+                    return "";
+                }
+
+                var assignToVar = $('#AssignedTo').val();
+                if(assignToVar===""){
+                    alert("Assigned to required");
+                    $('#AssignedTo').focus();
+                    return "";
+                }
+
+                var assignDateVar = $('#AssignmentDate').val();
+                if(assignDateVar===""){
+                    alert("Assignment Date required");
+                    $('#AssignmentDate').focus();
+                    return "";
+                }
+
+                var DeadlineVar = $('#deadline').val();
+                if(DeadlineVar===""){
+                    alert("Assignment Deadline required");
+                    $('#deadline').focus();
+                    return "";
+                }
+                
+                
+                var JsonStrObj ={
+                        Projectid: ProIdVar,
+                        Projectname :ProNameVar,
+                        AssignedTo : assignToVar, 
+                        AssignmentDate: assignDateVar, 
+                        Deadline:DeadlineVar , 
+                       
+                    };
+
+                // console.log(JsonStrObj);
+                return JSON.stringify(JsonStrObj);
+
+        }
+
+        function ChangeData(){
+
+          $('#change').prop('disabled',true);
+          jsonchg = validateAndGetFormData();
+        //   alert(jsonchg)
+
+          var updateReqStr = createUPDATERecordRequest(connToken, jsonchg,ProDBName, ProRelationName, localStorage.getItem("recno"));
+          jQuery.ajaxSetup({async:false})
+          var resJsonObj = executeCommandAtGivenBaseUrl(updateReqStr, jpdbBaseURL,jpdbIML);
+          jQuery.ajaxSetup({async:true});
+          ResetData();
+
+        }
+        
+        function ResetData(){
+
+                $('#ProId').prop('disabled',false);
+                $('#ProId').val("");
+                $('#ProName').val("");
+                $('#AssignedTo').val("");
+                $('#AssignmentDate').val("");
+                $('#deadline').val("");
+                $('#save').prop('disabled',true);
+                $('#change').prop('disabled',true);
+                $('#reset').prop('disabled',true);
+                $('#ProId').focus();
+      
+            }
+        
+        function SaveProject(){
+
+            var jsonStr = validateAndGetFormData();
+            if(jsonStr===""){
+                return "";
+            }
+
+            // alert(jsonStr)
+
+            var putReqStr = createPUTRequest(connToken, jsonStr, ProDBName, ProRelationName);
+
+            alert(putReqStr);
+
+            jQuery.ajaxSetup({async:false})
+            var resultObj = executeCommandAtGivenBaseUrl(putReqStr,jpdbBaseURL,jpdbIML);
+            // alert(JSON.stringify(resultObj));
+            jQuery.ajaxSetup({async:true});
+
+            ResetData();
+
+        }
+
+    </script>
+</body>
+</html>
+
+
